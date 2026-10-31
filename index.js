@@ -1,6 +1,5 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { llm } from '@langchain/tool'; 
 import "dotenv/config";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { MessagesAnnotation, StateGraph,  START,
@@ -14,8 +13,8 @@ const multipy = tool(
         name: 'multiply',
         description: 'Multiplies two numbers',
         schema: z.object({
-            a: z.number().description('First number to multiply'),
-            b: z.number().description('Second number to multiply')
+            a: z.number().describe('First number to multiply'),
+            b: z.number().describe('Second number to multiply')
         })
     }
 );
@@ -28,8 +27,8 @@ const add = tool(
         name: 'add',
         description: 'Adds two numbers',
         schema: z.object({
-            a: z.number().description('First number to add'),
-            b: z.number().description('Second number to add')
+            a: z.number().describe('First number to add'),
+            b: z.number().describe('Second number to add')
         })
     }
 );
@@ -42,8 +41,8 @@ const divide  = tool(
         name: 'divide',
         description: 'Divides two numbers',
         schema: z.object({
-            a: z.number().description('First number to divide'),
-            b: z.number().description('Second number to divide')
+            a: z.number().describe('First number to divide'),
+            b: z.number().describe('Second number to divide')
         })
     }
 );
@@ -51,11 +50,10 @@ const divide  = tool(
 const tools = [multipy, add, divide];
 
 const toolByName = Object.fromEntries(tools.map(tool => [tool.name, tool]));
-const llmQithTools = llm.bindTools(tools);
 
 
 const llmGemini = new ChatGoogleGenerativeAI({
-  model: "gemini-2.5-flash",
+  model: "gemini-3.8-flash",
   temperature: 0,
   maxRetries: 2,
 });
@@ -67,14 +65,14 @@ async function llmCall(state) {
 
     const result  = await llmWithTools.invoke([
         {
-            role: 'user',
+            role: 'system',
             content: 'You are a helpful assistant tasked with performing arithmetic operations on a set of inputs.'
         },
-        ...state.message
+        ...state.messages
     ]);
 
     return {
-        message: [result]
+        messages: [result]
     }
 }
 
@@ -123,14 +121,14 @@ const agentBuilder = new StateGraph(MessagesAnnotation)
 .addEdge(START, "llmCall")
 .addConditionalEdges("llmCall", shouldContinue, {
     "Action": "tools",
-    END: END
+    [END]: END
 })
 .addEdge("tools", "llmCall")
 .compile();
 
 
 
-const message =  [
+const messages = [
     {
         role: 'user',
         content: 'Please add 5 and 3.'
