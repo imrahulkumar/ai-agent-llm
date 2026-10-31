@@ -63,13 +63,14 @@ const llmWithTools = llmGemini.bindTools(tools);
 
 async function llmCall(state) {
 
+    console.log('Calling Gemini...');
     const result  = await llmWithTools.invoke([
         {
             role: 'system',
             content: 'You are a helpful assistant tasked with performing arithmetic operations on a set of inputs.'
         },
         ...state.messages
-    ]);
+    ], { timeout: 60000 });
 
     return {
         messages: [result]
@@ -87,6 +88,7 @@ async function toolNode(state) {
   const result = [];
   for (const toolCall of lastMessage.tool_calls ?? []) {
     const tool = toolByName[toolCall.name];
+    console.log(`Running tool ${toolCall.name}(${JSON.stringify(toolCall.args)})`);
     const observation = await tool.invoke(toolCall);
     result.push(observation);
   }
@@ -136,4 +138,4 @@ const messages = [
 ];
 
 const result  = await agentBuilder.invoke({ messages });
-console.log(result);
+console.log(result.messages.at(-1).content);
