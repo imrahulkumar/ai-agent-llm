@@ -70,7 +70,7 @@ async function llmCall(state) {
             content: 'You are a helpful assistant tasked with performing arithmetic operations on a set of inputs.'
         },
         ...state.messages
-    ], { timeout: 60000 });
+    ]);
 
     return {
         messages: [result]
